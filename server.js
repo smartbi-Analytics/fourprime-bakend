@@ -1,43 +1,41 @@
 const express = require("express");
 const cors = require("cors");
-const mysql = require("mysql2");
+const { Pool } = require('pg');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Conexão com MySQL
-const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "@d@niMila_14",
-  database: "fourprime"
+// Configuração do Postgres usando variáveis de ambiente
+const pool = new Pool({
+  host: process.env.DB_HOST,       // Host do Postgres na Render
+  port: process.env.DB_PORT || 5432,
+  user: process.env.DB_USER,       // Usuário do banco
+  password: process.env.DB_PASS,   // Senha do banco
+  database: process.env.DB_NAME,   // Nome do banco
 });
 
 // Teste de conexão
-db.connect(err => {
-  if (err) {
-    console.log("Erro ao conectar:", err);
-    return;
-  }
-  console.log("Conectado ao MySQL!");
-});
+pool.connect()
+  .then(() => console.log("Conectado ao Postgres!"))
+  .catch(err => console.error("Erro ao conectar:", err));
 
-// ROTA PARA RECEBER FORMULÁRIO
-app.post("/clientes", (req, res) => {
+// Rota para receber formulário
+app.post("/clientes", async (req, res) => {
   const dados = req.body;
 
   const sql = `
     INSERT INTO cliente (
-      pri_nome, sob_nome, cpf, país, estado, cidade, bairro, rua, end_numero, end_detalhe
-    ) VALUES (?,?,?,?,?,?,?,?,?,?)
+      pri_nome, sob_nome, cpf, pais, estado, cidade, bairro, rua, end_numero, end_detalhe
+    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+    RETURNING *
   `;
 
   const values = [
     dados.pri_nome,
     dados.sob_nome,
     dados.cpf,
-    dados.país,
+    dados.pais,
     dados.estado,
     dados.cidade,
     dados.bairro,
@@ -46,16 +44,17 @@ app.post("/clientes", (req, res) => {
     dados.end_detalhe
   ];
 
-  db.query(sql, values, (err, result) => {
-    if (err) {
-      console.log(err);
-      return res.status(500).send("Erro ao inserir no banco.");
-    }
-    res.send("Cliente cadastrado com sucesso!");
-  });
+  try {
+    const result = await pool.query(sql, values);
+    res.json({ message: "Cliente cadastrado com sucesso!", cliente: result.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Erro ao inserir no banco.", error: err });
+  }
 });
 
 // Iniciar servidor
-app.listen(3001, () => {
-  console.log("Servidor rodando na porta 3001");
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`Servidor rodando na porta ${PORT}`);
 });
