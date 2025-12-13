@@ -62,12 +62,12 @@ criarTabelaCliente();
 app.post("/clientes", async (req, res) => {
   const dados = req.body;
 
-  const sql = `
-    INSERT INTO cliente (
-      pri_nome, sob_nome, cpf, pais, estado, cidade, bairro, rua, end_numero, end_detalhe
-    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-    RETURNING *
-  `;
+const sql = `
+  INSERT INTO cliente (
+    data_incl, pri_nome, sob_nome, cpf, pais, estado, cidade, bairro, rua, end_numero, end_detalhe
+  ) VALUES (NOW() AT TIME ZONE 'America/Sao_Paulo', $1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+  RETURNING *;
+`;
 
   try {
     const result = await pool.query(sql, [
