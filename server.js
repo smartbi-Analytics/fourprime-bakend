@@ -34,7 +34,7 @@ const criarTabelaCliente = async () => {
   const sql = `
     CREATE TABLE IF NOT EXISTS cliente (
       id SERIAL PRIMARY KEY,
-      data_incl TIMESTAMP DEFAULT NOW(), -- Primeira coluna com data de criação
+      data_incl TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Sao_Paulo'), -- Primeira coluna com data de criação no horário de SP
       pri_nome TEXT,
       sob_nome TEXT,
       cpf VARCHAR(14),
@@ -45,16 +45,17 @@ const criarTabelaCliente = async () => {
       rua TEXT,
       end_numero TEXT,
       end_detalhe TEXT,
-      updated_at TIMESTAMP DEFAULT NOW()
+      updated_at TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Sao_Paulo')
     );
   `;
   try {
     await pool.query(sql);
     console.log("Tabela cliente criada com sucesso!");
   } catch (err) {
-    console.error("Erro ao criar tabela cliente:", err);
+    console.error("Erro ao criar tabela:", err);
   }
 };
+
 criarTabelaCliente();
 
 // Inserir cliente
